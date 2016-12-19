@@ -51,6 +51,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Config\Config.cs" />
     <Compile Include="OptionPageGeneral.cs">
       <SubType>Component</SubType>
     </Compile>

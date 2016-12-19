@@ -38,23 +38,7 @@ namespace PowerMode
 {
     public class ExplosionParticle
     {
-        static ExplosionParticle()
-        {
-            var service = ServiceProvider.GlobalProvider.GetService(typeof (SPowerMode)) as IPowerMode;
-            if (service == null) return;
-            var page = service.Package.General;
-
-            Color = page.Color;
-            AlphaRemoveAmount = page.AlphaRemoveAmount;
-            bGetColorFromEnvironment = bGetColorFromEnvironment;
-            RandomColor = page.RandomColor;
-            FrameDelay = page.FrameDelay;
-            Gravity = page.Gravity;
-            MaxParticleCount = page.MaxParticleCount;
-            MaxSideVelocity = page.MaxSideVelocity;
-            MaxUpVelocity = page.MaxUpVelocity;
-            StartAlpha = page.StartAlpha;
-        }
+       
 
         [ThreadStatic]
         private static Random _random;
@@ -78,24 +62,6 @@ namespace PowerMode
         private double _iterations;
         private uint _optionsVersion = 0;
 
-        public static double AlphaRemoveAmount { get; set; } = 0.045;
-
-        public static bool bGetColorFromEnvironment { get; set; }
-
-        public static Color Color { get; set; } = Colors.Black;
-        public static bool RandomColor { get; set; }
-
-        public static int FrameDelay { get; set; } = 17;
-
-        public static double Gravity { get; set; } = 0.3;
-
-        public static int MaxParticleCount { get; set; } = int.MaxValue;
-
-        public static double MaxSideVelocity { get; set; } = 2;
-
-        public static double MaxUpVelocity { get; set; } = 10;
-
-        public static double StartAlpha { get; set; } = 0.9;
 
         private static int ParticleCount { get; set; }
 
@@ -121,31 +87,39 @@ namespace PowerMode
 
         private void InitializeOptions()
         {
-            Color brushColor;
-            if (bGetColorFromEnvironment)
+            
+            Color brushColor = SnowConfig.Color;
+            if (SnowConfig.MixGetColorFromEnvironment>0)
             {
                 var svc = Package.GetGlobalService(typeof (SVsUIShell)) as IVsUIShell5;
-                brushColor = (svc.GetThemedWPFColor(EnvironmentColors.PanelTextColorKey));
+                brushColor = ColorExtension.MixColor(brushColor , (svc.GetThemedWPFColor(EnvironmentColors.PanelTextColorKey)) ,(1- SnowConfig.MixGetColorFromEnvironment), SnowConfig.MixGetColorFromEnvironment);
             }
-            else if (RandomColor)
+            else if (SnowConfig.MixRandomColor>0)
             {
-                brushColor = Random.NextColor();
+                brushColor = ColorExtension.MixColor(brushColor, (Random.NextColor()), (1 - SnowConfig.MixRandomColor), SnowConfig.MixRandomColor);
             }
             else
             {
-                brushColor = Color;
+                brushColor = SnowConfig.Color;
             }
+
+            //設定雪的大小
+            _rect = new Rect(-(SnowConfig.SnowSize / 2), -(SnowConfig.SnowSize / 2), (SnowConfig.SnowSize / 2), (SnowConfig.SnowSize / 2));
+            geometry = new EllipseGeometry(_rect);
+
             var brush = new SolidColorBrush(brushColor);
             var drawing = new GeometryDrawing(brush, null, geometry);
             drawing.Freeze();
 
             var drawingImage = new DrawingImage(drawing);
             drawingImage.Freeze();
+
             _image = new Image
             {
                 Source = drawingImage,
                 Visibility = Visibility.Hidden
             };
+
             // Add the image to the adornment layer and make it relative to the viewport
             adornmentLayer.AddAdornment(AdornmentPositioningBehavior.ViewportRelative,
                 null,
@@ -153,23 +127,20 @@ namespace PowerMode
                 _image,
                 null);
 
-            _iterations = StartAlpha / AlphaRemoveAmount;
-
-            //延長飄落時間
-            _iterations = _iterations * 50;
+            _iterations = SnowConfig.StartAlpha / SnowConfig.AlphaRemoveAmount;
 
             //算出時間
-            var timeSpan = TimeSpan.FromMilliseconds(FrameDelay * _iterations);
+            var timeSpan = TimeSpan.FromMilliseconds(TypingConfig.SnowFallDelay * _iterations);
 
             _leftAnimation = new DoubleAnimation();
 
             _topAnimation = new DoubleAnimation();
 
-            _topAnimation.EasingFunction = new BackEase {Amplitude = Gravity * 35*0.2};
+            _topAnimation.EasingFunction = new BackEase {Amplitude = SnowConfig.Gravity * 35};
 
             _opacityAnimation = new DoubleAnimation();
-            _opacityAnimation.From = StartAlpha;
-            _opacityAnimation.To = StartAlpha - (_iterations * AlphaRemoveAmount);
+            _opacityAnimation.From = SnowConfig.StartAlpha;
+            _opacityAnimation.To = SnowConfig.StartAlpha - (_iterations * SnowConfig.AlphaRemoveAmount);
 
             _leftAnimation.Duration = timeSpan;
             _topAnimation.Duration = timeSpan;
@@ -178,44 +149,50 @@ namespace PowerMode
             _optionsVersion = OptionPageGeneral.OptionsVersion;
         }
 
+       
+
         private void OnAnimationComplete()
         {
             _image.Visibility = Visibility.Hidden;
+            ParticleCount--;
             _afterExplode(this);
         }
+        
 
         /// <summary>
         /// 爆炸位置
         /// </summary>
         /// <param name="top"></param>
         /// <param name="left"></param>
-        public void Explode(double top, double left)
+        public void Explode(double top, double down,double left ,double right)
         {
-            top = -50;
             
-            left = Random.NextDouble() * 1920;
-
-            if (ParticleCount > MaxParticleCount)
+            int position_X = (int) (Random.NextDouble() * (right- left));
+            int position_Y = SystemConfig.SnowResolutionHeight;
+            
+            //如果超過目前最大粒子數量
+            if (ParticleCount > SystemConfig.MaxParticleCount)
                 return;
 
             ParticleCount++;
 
+            //如果設定有被更改過
             if (_optionsVersion != OptionPageGeneral.OptionsVersion) InitializeOptions();
-            var upVelocity = Random.NextDouble() * MaxUpVelocity;
-            var leftVelocity = Random.NextDouble() * MaxSideVelocity * Random.NextSignSwap();
 
-            _leftAnimation.From = left;
-            _leftAnimation.To = left - (_iterations * leftVelocity);
+            var leftVelocity = Random.NextDouble() * SnowConfig.MaxSideVelocity * Random.NextSignSwap();
+
+            _leftAnimation.From = position_X;
+            _leftAnimation.To = position_X - (_iterations * leftVelocity);
 
             _topAnimation.From = top;
-            _topAnimation.To = 1000;
+            _topAnimation.To = top + position_Y;
 
             _image.Visibility = Visibility.Visible;
             _image.BeginAnimation(Canvas.LeftProperty, _leftAnimation);
             _image.BeginAnimation(Canvas.TopProperty, _topAnimation);
             _image.BeginAnimation(Image.OpacityProperty, _opacityAnimation);
 
-            ParticleCount--;
+            
         }
 
 

@@ -44,4 +44,25 @@ namespace PowerMode.Extensions
             return Color.FromRgb(bytes[0], bytes[1], bytes[2]);
         }
     }
+
+    public static class ColorExtension
+    {
+
+        /// <summary>
+        /// 混合顏色
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <param name="precentageA"></param>
+        /// <param name="precentageB"></param>
+        /// <returns></returns>
+        public static Color MixColor(Color OrigColor, Color AddingMixingColor, float precentageA, float precentageB)
+        {
+
+            Color returnColor = new Color();
+            returnColor = OrigColor * precentageA + AddingMixingColor * precentageB;
+            returnColor.A = OrigColor.A;
+            return returnColor;
+        }
+    }
 }

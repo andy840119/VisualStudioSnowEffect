@@ -32,6 +32,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using PowerMode.Extensions;
 using Package = Microsoft.VisualStudio.Shell.Package;
+using System.Windows.Forms;
 
 namespace PowerMode
 {
@@ -53,9 +54,8 @@ namespace PowerMode
         /// </summary>
         private readonly IWpfTextView _view;
 
-        public static bool ParticlesEnabled { get; set; } = true;
 
-        public static bool ShakeEnabled { get; set; } = true;
+        private readonly Timer _timer;
 
         public int ExplosionAmount { get; set; } = 2;
 
@@ -70,12 +70,6 @@ namespace PowerMode
         public DateTime LastKeyPress { get; set; } = DateTime.Now;
 
         public int ComboStreak { get; set; }
-
-        public static int ComboActivationThreshold { get; set; } = 0;
-
-        public static int ComboTimeout { get; set; } = 10000; // In milliseconds
-
-        public static uint ParticlePerPress { get; set; } = 10;
 
         private const int MinMsBetweenShakes = 10;
 
@@ -104,17 +98,24 @@ namespace PowerMode
             {
                 throw new ArgumentNullException("view");
             }
+
+            //目前設定0.3秒呼叫一次
+            _timer = new Timer();
+            _timer.Interval = 300;
+            _timer.Start();
+            _timer.Tick+= Timer_Tickle;
+
             _view = view;
             _view.TextBuffer.Changed += TextBuffer_Changed;
             _view.TextBuffer.PostChanged += TextBuffer_PostChanged;
             _adornmentLayer = view.GetAdornmentLayer("ExplosionViewportAdornment");
             _explosionParticles =
                 new ConcurrentBag<ExplosionParticle>(
-                    Enumerable.Repeat<Func<ExplosionParticle>>(NewParticle, (int) (ParticlePerPress * 2))
+                    Enumerable.Repeat<Func<ExplosionParticle>>(NewParticle, (int) (TypingConfig.SnowPerPress * 2))
                         .Select(result => result()));
         }
 
-        private async void FormatCode(TextContentChangedEventArgs e)
+        private async void TypingSnowEffect(TextContentChangedEventArgs e)
         {
             if ((DateTime.Now - LastKeyPress).TotalMilliseconds < MinMsBetweenShakes)
             {
@@ -131,6 +132,33 @@ namespace PowerMode
                 {
                     //Ignore, not critical that we catch it
                 }
+            }
+        }
+
+
+        private async void TimerSnowEffect(int intervalTime)
+        {
+            if ((DateTime.Now - LastKeyPress).TotalMilliseconds < MinMsBetweenShakes)
+            {
+                return;
+            }
+
+            try
+            {
+               
+                //落雪特效
+                if (SystemConfig.ParticlesEnabled)
+                {
+                    int count = TimerConfig.SnowParSecond * intervalTime / 1000;
+                    for (uint i = 0; i < count; i++)
+                    {
+                        GetExplosionParticle().Explode(_view.ViewportTop, _view.ViewportBottom, _view.ViewportLeft, _view.ViewportRight);
+                    }
+                }
+            }
+            catch
+            {
+
             }
         }
 
@@ -153,21 +181,26 @@ namespace PowerMode
                     particle => _explosionParticles.Add(particle));
         }
 
+        /// <summary>
+        /// 處理落雪和搖動特效
+        /// </summary>
+        /// <param name="delta"></param>
+        /// <returns></returns>
         private async Task HandleChange(int delta)
         {
             if (ComboCheck())
             {
-                if (ParticlesEnabled)
+                if (SystemConfig.ParticlesEnabled)
                 {
-                    for (uint i = 0; i < ParticlePerPress; i++)
+                    for (uint i = 0; i < TypingConfig.SnowPerPress; i++)
                     {
-                        GetExplosionParticle().Explode(_view.Caret.Top, _view.Caret.Left);
+                        GetExplosionParticle().Explode(_view.ViewportTop, _view.ViewportBottom, _view.ViewportLeft, _view.ViewportRight);
                     }
                 }
                 
-                if (ShakeEnabled)
+                if (TypingConfig.ShakeEnabled)
                 {
-                    //await Shake(delta);
+                    await Shake(delta);
                 }
             }
         }
@@ -193,7 +226,7 @@ namespace PowerMode
         /// <returns>True if power mode should be activated for this change. False if power mode should be ignored for this change.</returns>
         private bool ComboCheck()
         {
-            if (ComboActivationThreshold == 0)
+            if (TypingConfig.ComboActivationThreshold == 0)
             {
                 LastKeyPress = DateTime.Now;
                 return true;
@@ -201,13 +234,13 @@ namespace PowerMode
             var now = DateTime.Now;
             ComboStreak++;
 
-            if (LastKeyPress.AddMilliseconds(ComboTimeout) < now) // More than x ms since last key-press. Combo has been broken.
+            if (LastKeyPress.AddMilliseconds(TypingConfig.ComboTimeout) < now) // More than x ms since last key-press. Combo has been broken.
             {
                 ComboStreak = 1;
             }
 
             LastKeyPress = now;
-            var activatePowerMode = ComboStreak >= ComboActivationThreshold; // Activate powermode if number of keypresses exceeds the threshold for activation
+            var activatePowerMode = ComboStreak >= TypingConfig.ComboActivationThreshold; // Activate powermode if number of keypresses exceeds the threshold for activation
             return activatePowerMode; // Perhaps different levels for power-mode intensity? First just particles, then screen shake?
         }
 
@@ -218,7 +251,18 @@ namespace PowerMode
         /// <param name="e"></param>
         private void TextBuffer_Changed(object sender, TextContentChangedEventArgs e)
         {
-            FormatCode(e);
+            TypingSnowEffect(e);
+        }
+
+        /// <summary>
+        /// 定時器呼叫
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Timer_Tickle(object sender, EventArgs e)
+        {
+            Timer timer = (Timer)sender;
+            TimerSnowEffect(timer.Interval);
         }
 
         private void TextBuffer_PostChanged(object sender, EventArgs e)
