@@ -33,6 +33,6 @@ Thanks to PowerMode , praise to PowerMode!
 .   
 ##Screenshot
 Demo : )  
-![alt text](https://raw.githubusercontent.com/andy840119/VisualStudioSnowEffect/VisualStudioSnowEffect/Effect001.gif "Screenshot")
+![alt text](https://raw.githubusercontent.com/andy840119/VisualStudioSnowEffect/master/VisualStudioSnowEffect/Effect001.gif "Screenshot")
 
-![alt text](https://raw.githubusercontent.com/andy840119/VisualStudioSnowEffect/VisualStudioSnowEffect/Effect002.gif "Screenshot")
+![alt text](https://raw.githubusercontent.com/andy840119/VisualStudioSnowEffect/master/VisualStudioSnowEffect/Effect002.gif "Screenshot")
