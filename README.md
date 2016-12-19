@@ -1,17 +1,26 @@
-# Visual-Studio-Power-Mode
-An extension that attempts to clone the power mode in Atom found here : https://atom.io/packages/activate-power-mode  
-Feel free to fork and submit pull requests, I'm excited to see what we can add.  
-Unfortunately, I couldn't figure out how to get the current text colour so for now it is just customizable. 
+# VisualStudio snow effect
+You poor guys have to work on Christmas : (
+me too : (
+Intstall this visual studio snow effect extension to feel more christmas : )
+...maybe
+.
+真是難過，聖誕節情侶都出去約會 : (
+沒女朋友就算了，還要一個人在電腦桌前當低薪碼農
+在Visual Studio 上面裝一下下雪的特效
+感受一下原本就不存在的聖誕節氣氛吧 : )
+.
+日本語訳は存在しません : (
+.
+##0.1 Release Notes 
+change typing effect to snow effect
+the 1.0 version maybe will be publish before christmas.(2016/12/25)
+
+##Link to built Extension
+https://github.com/LiamMorrow/Visual-Studio-Power-Mode
+Thanks to PowerMode , praise to PowerMode!
+感謝PowerMode，讚嘆PowerMode!
 
 
-Settings can be found in the Tools > options > Power Mode menu.  
-
-##1.1.5 Release Notes 
-Fixed settings loading issue  
-Added random colour options  
-
-##Link to built Extension:  
-https://visualstudiogallery.msdn.microsoft.com/936788cc-7213-4d48-93ae-045694781214
-
-##Screenshot:  
-![alt text](https://raw.githubusercontent.com/LiamMorrow/Visual-Studio-Power-Mode/master/PowerMode/Resources/Screenshot.png "Screenshot")
+##Screenshot
+圖片會晚一點修改 : (
+![alt text](https://raw.githubusercontent.com/andy840119/VisualStudioSnowEffect/master/PowerMode/Resources/Screenshot.png "Screenshot")
