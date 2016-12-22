@@ -22,19 +22,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-namespace PowerMode
-{
-    class PowerModeService : SPowerMode, IPowerMode
-    {
-        private readonly PowerModePackage _package;
+using System;
+using System.Runtime.InteropServices;
 
-        public PowerModeService(PowerModePackage package)
-        {
-            _package = package;
-        }
-        
-        public PowerModePackage Package {
-            get { return _package; }
-        }
+namespace ShowEffect
+{
+
+    [Guid("0F4D79E8-1BDA-4852-BAFF-39E8CC87E1D5")]
+    [ComVisible(true)]
+    public interface ISnowEffect
+    {
+        SnowEffectPackage Package { get; }
     }
+
+    [Guid("623E2A73-18DD-4855-ADF5-5400CA4C4EB5")]
+    public interface SSnowEffect { }
 }

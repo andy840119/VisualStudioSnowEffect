@@ -46,7 +46,7 @@ using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
-namespace PowerMode
+namespace ShowEffect
 {
     
     /// <summary>
@@ -70,20 +70,20 @@ namespace PowerMode
     [InstalledProductRegistration("#1110", "#1112", "1.1.5", IconResourceID = 1400)] // Info on this package for Help/About
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideOptionPage(typeof(OptionPageGeneral), "Show Effect", "General", 1116, 1113, true)]
-    [ProvideService(typeof(SPowerMode))]
+    [ProvideService(typeof(SSnowEffect))]
     [Guid(PackageGuidString)]
-    public sealed class PowerModePackage : Package
+    public sealed class SnowEffectPackage : Package
     {
         /// <summary>
-        /// PowerModeOptionsPackage GUID string.
+        /// SnowEffectOptionsPackage GUID string.
         /// </summary>
         public const string PackageGuidString = "4e687eae-ae26-4139-b888-a0ae8c2e16ff";
-        private PowerModeService Service;
+        private SnowEffectService Service;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="PowerModePackage"/> class.
+        /// Initializes a new instance of the <see cref="SnowEffectPackage"/> class.
         /// </summary>
-        public PowerModePackage()
+        public SnowEffectPackage()
         {
             // Inside this method you can place any initialization code that does not require
             // any Visual Studio service because at this point the package object is created but
@@ -109,8 +109,8 @@ namespace PowerMode
         {
             base.Initialize();
 
-            Service = new PowerModeService(this);
-            ((IServiceContainer)this).AddService(typeof(SPowerMode), Service, true);
+            Service = new SnowEffectService(this);
+            ((IServiceContainer)this).AddService(typeof(SSnowEffect), Service, true);
         }
 
         #endregion Package Members

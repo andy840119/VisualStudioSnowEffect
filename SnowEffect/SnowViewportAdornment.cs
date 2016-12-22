@@ -30,16 +30,18 @@ using System.Threading.Tasks;
 using EnvDTE;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using PowerMode.Extensions;
+using ShowEffect.Extensions;
 using Package = Microsoft.VisualStudio.Shell.Package;
 using System.Windows.Forms;
+using System.Windows.Media.Animation;
+using System.Windows;
 
-namespace PowerMode
+namespace ShowEffect
 {
     /// <summary>
     /// Adornment class that draws a square box in the top right hand corner of the viewport
     /// </summary>
-    internal sealed class ExplosionViewportAdornment
+    internal sealed class SnowViewportAdornment
     {
         [ThreadStatic]
         private static Random _random;
@@ -87,12 +89,12 @@ namespace PowerMode
         
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ExplosionViewportAdornment"/> class.
+        /// Initializes a new instance of the <see cref="SnowViewportAdornment"/> class.
         /// Creates a square image and attaches an event handler to the layout changed event that
         /// adds the the square in the upper right-hand corner of the TextView via the adornment layer
         /// </summary>
         /// <param name="view">The <see cref="IWpfTextView"/> upon which the adornment will be drawn</param>
-        public ExplosionViewportAdornment(IWpfTextView view)
+        public SnowViewportAdornment(IWpfTextView view)
         {
             if (view == null)
             {
@@ -110,9 +112,10 @@ namespace PowerMode
             _view.TextBuffer.PostChanged += TextBuffer_PostChanged;
             _adornmentLayer = view.GetAdornmentLayer("ExplosionViewportAdornment");
             _explosionParticles =
-                new ConcurrentBag<ExplosionParticle>(
-                    Enumerable.Repeat<Func<ExplosionParticle>>(NewParticle, (int) (TypingConfig.SnowPerPress * 2))
+                new ConcurrentBag<SnowParticle>(
+                    Enumerable.Repeat<Func<SnowParticle>>(NewParticle, (int) (TypingConfig.SnowPerPress * 2))
                         .Select(result => result()));
+
         }
 
         private async void TypingSnowEffect(TextContentChangedEventArgs e)
@@ -162,11 +165,11 @@ namespace PowerMode
             }
         }
 
-        private ConcurrentBag<ExplosionParticle> _explosionParticles;
+        private ConcurrentBag<SnowParticle> _explosionParticles;
 
-        private ExplosionParticle GetExplosionParticle()
+        private SnowParticle GetExplosionParticle()
         {
-            ExplosionParticle result;
+            SnowParticle result;
             if (!_explosionParticles.TryTake(out result))
             {
                 result = NewParticle();
@@ -174,9 +177,9 @@ namespace PowerMode
             return result;
         }
 
-        private ExplosionParticle NewParticle()
+        private SnowParticle NewParticle()
         {
-            return new ExplosionParticle(_adornmentLayer,
+            return new SnowParticle(_adornmentLayer,
                     (DTE)Package.GetGlobalService(typeof(DTE)),
                     particle => _explosionParticles.Add(particle));
         }
@@ -221,9 +224,9 @@ namespace PowerMode
         }
 
         /// <summary>
-        /// Keep track of how many keypresses the user has done and returns whether power mode should be activated for each change.
+        /// Keep track of how many keypresses the user has done and returns whether Snow Effect should be activated for each change.
         /// </summary>
-        /// <returns>True if power mode should be activated for this change. False if power mode should be ignored for this change.</returns>
+        /// <returns>True if Snow Effect should be activated for this change. False if Snow Effect should be ignored for this change.</returns>
         private bool ComboCheck()
         {
             if (TypingConfig.ComboActivationThreshold == 0)
@@ -240,8 +243,8 @@ namespace PowerMode
             }
 
             LastKeyPress = now;
-            var activatePowerMode = ComboStreak >= TypingConfig.ComboActivationThreshold; // Activate powermode if number of keypresses exceeds the threshold for activation
-            return activatePowerMode; // Perhaps different levels for power-mode intensity? First just particles, then screen shake?
+            var activateSnowEffect = ComboStreak >= TypingConfig.ComboActivationThreshold; // Activate SnowEffect if number of keypresses exceeds the threshold for activation
+            return activateSnowEffect; // Perhaps different levels for Snow-Effect intensity? First just particles, then screen shake?
         }
 
         /// <summary>

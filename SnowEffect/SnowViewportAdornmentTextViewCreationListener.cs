@@ -25,8 +25,11 @@ SOFTWARE.
 using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
+using System.Windows.Media.Animation;
+using System.Windows;
+using System;
 
-namespace PowerMode
+namespace ShowEffect
 {
     /// <summary>
     /// Establishes an <see cref="IAdornmentLayer"/> to place the adornment on and exports the <see cref="IWpfTextViewCreationListener"/>
@@ -35,7 +38,7 @@ namespace PowerMode
     [Export(typeof(IWpfTextViewCreationListener))]
     [ContentType("text")]
     [TextViewRole(PredefinedTextViewRoles.Document)]
-    internal sealed class ExplosionViewportAdornmentTextViewCreationListener : IWpfTextViewCreationListener
+    internal sealed class SnowViewportAdornmentTextViewCreationListener : IWpfTextViewCreationListener
     {
         // Disable "Field is never assigned to..." and "Field is never used" compiler's warnings. Justification: the field is used by MEF.
 #pragma warning disable 649, 169
@@ -58,7 +61,20 @@ namespace PowerMode
         public void TextViewCreated(IWpfTextView textView)
         {
             // The adorment will get wired to the text view events
-            new ExplosionViewportAdornment(textView);
+            new SnowViewportAdornment(textView);
+
+            try
+            {
+                //設定目前顯示FPS
+                Timeline.DesiredFrameRateProperty.OverrideMetadata(
+                   typeof(Timeline),
+                   new FrameworkPropertyMetadata { DefaultValue = SystemConfig.FPS }
+                   );
+            }
+            catch (Exception ex)
+            {
+                //System.Windows.Forms.MessageBox.Show(ex.Message.ToString());
+            }
         }
     }
 }

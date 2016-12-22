@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 
-namespace PowerMode
+namespace ShowEffect
 {
     /// <summary>
     /// 初始化整體設定
@@ -28,7 +28,7 @@ namespace PowerMode
     {
         static SystemConfig()
         {
-            var service = ServiceProvider.GlobalProvider.GetService(typeof(SPowerMode)) as IPowerMode;
+            var service = ServiceProvider.GlobalProvider.GetService(typeof(SSnowEffect)) as ISnowEffect;
             if (service == null) return;
             page = service.Package.General;
 
@@ -43,14 +43,35 @@ namespace PowerMode
         public static bool ParticlesEnabled { get; set; } = true;
 
         /// <summary>
+        /// 雪落下的位置參考是用解析度還是視窗百分比
+        /// </summary>
+        public static SnowFallDownHeightMode FallDownHeightMode { get; set; } = SnowFallDownHeightMode.Precentage;
+
+        /// <summary>
         /// 設定雪落下的pixel
         /// </summary>
-        public static int SnowResolutionHeight { get; set; } = 1000;
+        public static int SnowResolutionHeight { get; set; } = 200;
+
+        /// <summary>
+        /// 設定雪落下的pixel
+        /// 0~1
+        /// </summary>
+        public static float SnowResolutionHeightPrecentage { get; set; } = 1;
 
         /// <summary>
         /// 最多有多少雪
         /// </summary>
-        public static int MaxParticleCount { get; set; } = 8787;// int.MaxValue;
+        public static int MaxParticleCount { get; set; } = 870;// int.MaxValue;
+
+        /// <summary>
+        /// FPS
+        /// </summary>
+        public static int FPS { get; set; } = 60;
+
+        /// <summary>
+        /// enum SnowFallDownHeightMode
+        /// </summary>
+        public enum SnowFallDownHeightMode{Precentage,Pixel};
     }
 
     /// <summary>
@@ -61,52 +82,58 @@ namespace PowerMode
     {
         static SnowConfig()
         {
-            var service = ServiceProvider.GlobalProvider.GetService(typeof(SPowerMode)) as IPowerMode;
+            var service = ServiceProvider.GlobalProvider.GetService(typeof(SSnowEffect)) as ISnowEffect;
             if (service == null) return;
             page = service.Package.General;
 
             //參數設定
+            Image = page.image;
             Color = page.Color;
             MixGetColorFromEnvironment = page.MixGetColorFromEnvironment;
             MixRandomColor = page.MixRandomColor;
             SnowSize = page.SnowSize;
             MaxSideVelocity = page.MaxSideVelocity;
-            Gravity = page.Gravity;
+            Amplitude = page.Amplitude;
             StartAlpha = page.StartAlpha;
-            AlphaRemoveAmount = page.AlphaRemoveAmount;
+            FallDownSpeed = page.FallDownSpeed;
 
         }
         /// <summary>
+        /// 基底圖片
+        /// </summary>
+        public static System.Drawing.Image Image { get; set; } = null;
+
+        /// <summary>
         /// 基底顏色
         /// </summary>
-        public static Color Color { get; set; } = Colors.Black;
+        public static Color Color { get; set; } = Colors.White;
 
         /// <summary>
         /// 從系統上取得目前顏色
         /// 0~1
         /// </summary>
-        public static float MixGetColorFromEnvironment { get; set; } = 0;
+        public static float MixGetColorFromEnvironment { get; set; } = 0.0f;
 
         /// <summary>
         /// 要不要隨機顏色
         /// 0~1
         /// </summary>
-        public static float MixRandomColor { get; set; } = 0;
+        public static float MixRandomColor { get; set; } = 0.8f;
 
         /// <summary>
         /// 雪的顆粒大小
         /// </summary>
-        public static double SnowSize { get; set; } = 10;
+        public static float SnowSize { get; set; } = 30;
 
         /// <summary>
         /// 左右噴的速度
         /// </summary>
-        public static double MaxSideVelocity { get; set; } = 2;
+        public static double MaxSideVelocity { get; set; } = 15;
 
         /// <summary>
-        /// 重力
+        /// 偏移量
         /// </summary>
-        public static double Gravity { get; set; } = 0.3;
+        public static double Amplitude { get; set; } = 0.0175;
 
 
         /// <summary>
@@ -115,11 +142,9 @@ namespace PowerMode
         public static double StartAlpha { get; set; } = 0.9;
 
         /// <summary>
-        /// 透明度遞減
+        /// 落下速度，單位是pixel /秒
         /// </summary>
-        public static double AlphaRemoveAmount { get; set; } = 0.045;
-
-
+        public static double FallDownSpeed { get; set; } = 400;
     }
 
     /// <summary>
@@ -129,17 +154,33 @@ namespace PowerMode
     {
         static TimerConfig()
         {
-            var service = ServiceProvider.GlobalProvider.GetService(typeof(SPowerMode)) as IPowerMode;
+            var service = ServiceProvider.GlobalProvider.GetService(typeof(SSnowEffect)) as ISnowEffect;
             if (service == null) return;
             page = service.Package.General;
 
             SnowParSecond = page.SnowParSecond;
+            SnowTimeAfterTyping = page.SnowTimeAfterTyping;
+            SnowWaitingTimeAfteerTyping = page.SnowWaitingTimeAfteerTyping;
         }
 
         /// <summary>
         /// 每秒鐘落下幾顆雪
         /// </summary>
-        public static int SnowParSecond { get; set; } = 15;
+        public static int SnowParSecond { get; set; } = 10;
+
+        /// <summary>
+        /// 飄雪時間
+        /// 經過多久沒有打字就會停止飄雪
+        /// 或是 -1 = 無限大
+        /// -1~3600秒
+        /// </summary>
+        public static int SnowTimeAfterTyping { get; set; } = 0;
+
+        /// <summary>
+        /// 打字過後經過多久才會開始飄雪
+        /// 0~無限大
+        /// </summary>
+        public static int SnowWaitingTimeAfteerTyping { get; set; } = 0;
     }
 
     /// <summary>
@@ -149,7 +190,7 @@ namespace PowerMode
     {
         static TypingConfig()
         {
-            var service = ServiceProvider.GlobalProvider.GetService(typeof(SPowerMode)) as IPowerMode;
+            var service = ServiceProvider.GlobalProvider.GetService(typeof(SSnowEffect)) as ISnowEffect;
             if (service == null) return;
             page = service.Package.General;
 
@@ -165,12 +206,12 @@ namespace PowerMode
         /// <summary>
         /// 每按一下鍵盤噴幾顆雪
         /// </summary>
-        public static int SnowPerPress { get; set; } = 10;
+        public static int SnowPerPress { get; set; } = 1;
 
         /// <summary>
         /// 在combo內如果多按一下就平均增加幾顆雪
         /// </summary>
-        public static int ComboAdditionSnowNumber { get; set; } = 3;
+        public static int ComboAdditionSnowNumber { get; set; } = 0;
 
         /// <summary>
         /// 延遲時間
@@ -196,9 +237,5 @@ namespace PowerMode
         /// 幾秒鐘後combo 斷掉
         /// </summary>
         public static int ComboTimeout { get; set; } = 5000; // In milliseconds
-
-        
-
-        
     }
 }
